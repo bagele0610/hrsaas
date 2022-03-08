@@ -121,12 +121,14 @@ const mutations = {
 const actions = {
   async login(context, data) {
     // 调用api接口
-    const result = await login(data)
+    const result = await login(data)// 拿到token
     // axios默认加了一层data
-    if (result.data.success) {
-      // 如果为true，表示登陆成功
-      context.commit('setToken', result.data.data)
-    }
+    // if (result.data.success) {
+    //   // 如果为true，表示登陆成功
+    //   context.commit('setToken', result.data.data)
+    // }
+    // 响应拦截器已经做过处理
+    context.commit('setToken', result)// 设置token
   }
 }
 
