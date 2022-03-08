@@ -96,12 +96,14 @@
 // }
 
 import { getToken, setToken, removeToken } from '@/utils/auth'
-import { login } from '@/api/user'
+import { login, getUserInfo } from '@/api/user'
 
 // 状态
 const state = {
   // 初始化vuex的时候，就先从缓存中读取
-  token: getToken() // 设置token为共享状态
+  token: getToken(), // 设置token为共享状态
+  userInfo: {} // 这里定义一个空对象，而不是null，为什么呢？//*因为我们会在**`getters`**中引用userinfo的变量，如果设置为null，则会引起异常和报错
+
 }
 
 // 修改状态
@@ -114,6 +116,15 @@ const mutations = {
   removeToken(state) {
     state.token = null// 将vuex的数据置空
     removeToken()// 同步到缓存
+  },
+  setUserInfo(state, result) {
+    // 更新一个对象
+    state.userInfo = result // 这样是响应式
+    // state.userInfo = { ...result }// 这样也是响应式 属于浅拷贝
+    // state.userInfo['username'] = result // 这样不是响应式
+  },
+  removeUserInfo(state) {
+    state.userInfo = {}
   }
 }
 
@@ -129,6 +140,11 @@ const actions = {
     // }
     // 响应拦截器已经做过处理
     context.commit('setToken', result)// 设置token
+  },
+  async getUserInfo(context) {
+    const result = await getUserInfo()
+    context.commit('setUserInfo', result) // 提交到mutation
+    return result // 这里return  是给后期做权限的时候留下伏笔
   }
 }
 
