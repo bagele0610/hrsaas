@@ -97,7 +97,7 @@ const service = axios.create({
 service.interceptors.request.use(config => {
   // 注入token
   if (store.getters.token) {
-    config.headers['Authorization'] = `Bearer${store.getters.token}`
+    config.headers['Authorization'] = `Bearer ${store.getters.token}`
   }
 
   // config是请求的配置信息

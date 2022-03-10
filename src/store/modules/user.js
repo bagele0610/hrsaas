@@ -96,7 +96,7 @@
 // }
 
 import { getToken, setToken, removeToken } from '@/utils/auth'
-import { login, getUserInfo } from '@/api/user'
+import { login, getUserInfo, getUserDetailById } from '@/api/user'
 
 // 状态
 const state = {
@@ -143,8 +143,20 @@ const actions = {
   },
   async getUserInfo(context) {
     const result = await getUserInfo()
-    context.commit('setUserInfo', result) // 提交到mutation
+    // 获取用户的详情  用户的详情数据
+    const baseInfo = await getUserDetailById(result.userId)
+
+    // 将两个接口结果合并
+    context.commit('setUserInfo', { ...result, ...baseInfo }) // 提交到mutation
     return result // 这里return  是给后期做权限的时候留下伏笔
+  },
+
+  // 登出操作
+  logout(context) {
+    // 删除token
+    context.commit('removeToken')
+    // 删除用户资料
+    context.commit('removeUserInfo')
   }
 }
 
