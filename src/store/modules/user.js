@@ -95,7 +95,7 @@
 //   actions
 // }
 
-import { getToken, setToken, removeToken } from '@/utils/auth'
+import { getToken, setToken, removeToken, getTimeStamp, setTimeStamp } from '@/utils/auth'
 import { login, getUserInfo, getUserDetailById } from '@/api/user'
 
 // 状态
@@ -140,6 +140,9 @@ const actions = {
     // }
     // 响应拦截器已经做过处理
     context.commit('setToken', result)// 设置token
+
+    // 拿到token说明登录成功
+    setTimeStamp()
   },
   async getUserInfo(context) {
     const result = await getUserInfo()
