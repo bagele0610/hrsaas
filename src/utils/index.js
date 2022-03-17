@@ -115,3 +115,21 @@ export function param2Obj(url) {
   })
   return obj
 }
+
+// 将列表形数据转换为树形数据 -=>递归算法=>自身调用自身=>条件不能一样，否则就会死循环
+// 遍历树形有一个中带你，要先找一个头
+export function tranListToTreeData(list, rootValue) {
+  var arr = []
+  list.forEach(item => {
+    if (item.pid === rootValue) {
+      // 找到之后  就要去找item下面有没有子节点
+      const children = tranListToTreeData(list, item.id)
+      if (children.length) {
+        // 如果长度大于0说明找到了子节点
+        item.children = children
+      }
+      arr.push(item)// 将内容加入到数组中
+    }
+  })
+  return arr
+}
