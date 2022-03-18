@@ -19,6 +19,7 @@
           <TreeTools
             slot-scope="{data}"
             :tree-node="data"
+            @delDepts="getDePartments()"
           />
         </el-tree>
       </el-card>
@@ -52,7 +53,6 @@ export default {
       const result = await getDePartments()
       this.company = { name: result.companyName, manager: '负责人' }
       this.departs = tranListToTreeData(result.depts, '') // 需要转换为树形结构
-      console.log(result)
     }
   }
 }
