@@ -3,9 +3,11 @@
   <el-dialog
     title="新增部门"
     :visible="showDialog"
+    @close="btnCancel"
   >
     <!-- 表单数据 -->
     <el-form
+      ref="deptForm"
       :model="formData"
       :rules="rules"
       label-width="120px"
@@ -78,8 +80,12 @@
       justify="center"
     >
       <el-col :span="6">
-        <el-button size="small">取消</el-button>
         <el-button
+          size="small"
+          @click="btnCancel"
+        >取消</el-button>
+        <el-button
+          @click="btnOk"
           size="small"
           type="primary"
         >确定</el-button>
@@ -91,7 +97,7 @@
 </template>
 
 <script>
-import { getDePartments } from '@/api/departments'
+import { getDePartments, addDepartments } from '@/api/departments'
 import { getEmployeeSimple } from '@/api/employees'
 export default {
   name: '',
@@ -121,7 +127,7 @@ export default {
     const checkCodeRepeat = async (rule, value, callback) => {
       const { depts } = await getDePartments()
       // 要求编码 和所有的部门编码都不能重复  由于历史数据有可能没有code所以加一个强制性条件 就是value值不为空
-      const isRepeat = depts.some(item => item.code && value)
+      const isRepeat = depts.some(item => item.code === value && value)
       isRepeat ? callback(new Error(`组织架构下已经有${value}编码了`)) : callback()
     }
     return {
@@ -166,6 +172,25 @@ export default {
   methods: {
     async getEmployeeSimple() {
       this.peoples = await getEmployeeSimple()
+    },
+    btnOk() {
+      // 手动校验表单
+      this.$refs.deptForm.validate(async isOK => {
+        if (isOK) {
+          // 表单校验通过,可以提交了
+          // 将ID设成pid
+          await addDepartments({ ...this.formData, pid: this.treeNode.id })
+          this.$emit('addDepts')//触发子传父自定义事件 渲染页面
+          this.$emit('update:showDialog', false)//sync修饰符，父组件.sync
+          // 不用清楚已有表单数据---因为关闭dialog的时候 会 触发el-dialog的close事件
+        }
+      })
+    },
+    btnCancel() {
+      // 关闭弹层
+      this.$emit('update:showDialog', false)
+      // 清楚之前的数据和校验
+      this.$refs.deptForm.resetFields()
     }
   }
 }
