@@ -23,12 +23,14 @@
             :tree-node="data"
             @delDepts="getDePartments()"
             @addDepts="addDepts"
+            @editDepts="editDepts"
           />
         </el-tree>
       </el-card>
     </div>
     <!-- 防止新增弹层组件 -->
     <AddDept
+      ref="addDept"
       :show-dialog.sync="showDialog"
       :tree-node="node"
       @addDepts="getDePartments"
@@ -72,6 +74,12 @@ export default {
     addDepts(node) {
       this.showDialog = true // 显示弹层
       this.node = node
+    },
+    editDepts(node) {
+      this.showDialog = true//弹出层
+      this.node = node
+      // 在这里调用获取部门详情方法
+      this.$refs.addDept.getDepartDetail(node.id)
     }
   }
 }

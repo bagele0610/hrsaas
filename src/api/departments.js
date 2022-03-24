@@ -29,3 +29,19 @@ export function addDepartments(data) {
     data// axios的body参数
   })
 }
+
+// 获取某一个（点击）的详情
+export function getDepartDetail(id) {
+  return request({
+    url:`/company/department/${id}`
+  })
+}
+
+// 根据ID修改部门详情
+export function updateDepartments(data) {
+  return request({
+    url: `/company/department/${data.id}`,
+    method: 'put',
+    data
+  })
+}

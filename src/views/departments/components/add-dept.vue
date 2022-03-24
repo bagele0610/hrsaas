@@ -1,7 +1,7 @@
 <template>
   <!-- 放置弹层组件 -->
   <el-dialog
-    title="新增部门"
+    :title="showTitle"
     :visible="showDialog"
     @close="btnCancel"
   >
@@ -97,7 +97,7 @@
 </template>
 
 <script>
-import { getDePartments, addDepartments } from '@/api/departments'
+import { getDePartments, addDepartments, getDepartDetail, updateDepartments } from '@/api/departments'
 import { getEmployeeSimple } from '@/api/employees'
 export default {
   name: '',
@@ -119,15 +119,33 @@ export default {
       const { depts } = await getDePartments()
       // 去找同级部门下 有没有和value相同的数据
       // 找到同级部门所有的子部门
-      const isRepeat = depts.filter(item => item.pid === this.treeNode.id).some(item => item.name === value)
-      console.log(isRepeat)
+      let isRepeat = false
+      if (this.formData.id) {
+        // 编辑模式
+        // 编辑的数据，已经在数据库里   同级部门下不能和其他的部门名字相同
+        // 找到同级部门  this.formData.id就是当前的idpid是this.formData.pid
+        // depts.filter(item => item.pid === this.formData.pid)//也可换成treeNode
+        isRepeat = depts.filter(item => item.pid === this.treeNode.pid && item.id !== this.treeNode.id).some(item => item.name === value)
+      } else {
+        // 新增模式
+        // 沿用之前的规则
+        isRepeat = depts.filter(item => item.pid === this.treeNode.id).some(item => item.name === value)
+      }
       // 如果isRepeat为true 表示有相同名称
       isRepeat ? callback(new Error(`同级部门下已经有${value}的部门了`)) : callback()
     }
     const checkCodeRepeat = async (rule, value, callback) => {
       const { depts } = await getDePartments()
       // 要求编码 和所有的部门编码都不能重复  由于历史数据有可能没有code所以加一个强制性条件 就是value值不为空
-      const isRepeat = depts.some(item => item.code === value && value)
+      let isRepeat = false
+      if (this.formData.id) {
+        // 编辑模式
+        // code不能一样
+        isRepeat = depts.filter(item => item.id !== this.treeNode.id).some(item => item.code === value && value)
+      } else {
+        // 新增模式
+        isRepeat = depts.some(item => item.code === value && value)
+      }
       isRepeat ? callback(new Error(`组织架构下已经有${value}编码了`)) : callback()
     }
     return {
@@ -165,7 +183,11 @@ export default {
       peoples: []
     }
   },
-  computed: {},
+  computed: {
+    showTitle() {
+      return this.formData.id ? '编辑部门' : '新增子部门'
+    }
+  },
   watch: {},
   created() { },
   mounted() { },
@@ -173,13 +195,27 @@ export default {
     async getEmployeeSimple() {
       this.peoples = await getEmployeeSimple()
     },
+
+    // 获取详情方法
+    async getDepartDetail(id) {
+      // 父组件调用子组件的方法，先设置了node数据直接调用方法
+      // props传值是异步的
+      this.formData = await getDepartDetail(id)
+    },
+
     btnOk() {
       // 手动校验表单
       this.$refs.deptForm.validate(async isOK => {
         if (isOK) {
-          // 表单校验通过,可以提交了
-          // 将ID设成pid
-          await addDepartments({ ...this.formData, pid: this.treeNode.id })
+          if (this.formData.id) {
+            // 是编辑
+            await updateDepartments(this.formData)
+
+          } else {
+            // 表单校验通过,可以提交了
+            // 将ID设成pid
+            await addDepartments({ ...this.formData, pid: this.treeNode.id })
+          }
           this.$emit('addDepts')//触发子传父自定义事件 渲染页面
           this.$emit('update:showDialog', false)//sync修饰符，父组件.sync
           // 不用清楚已有表单数据---因为关闭dialog的时候 会 触发el-dialog的close事件
@@ -187,9 +223,16 @@ export default {
       })
     },
     btnCancel() {
+      // 重置数据  因为resetFields只能重置表单上的数据 非表单上的 比如编辑中id不能重置
+      this.formData = {
+        name: '', // 部门名称
+        code: '', // 部门编码
+        manager: '', // 部门管理者
+        introduce: '' // 部门介绍
+      }
       // 关闭弹层
       this.$emit('update:showDialog', false)
-      // 清楚之前的数据和校验
+      // 清楚之前的数据和校验   可以充值数据  但是只能重置  在data中定义的数据
       this.$refs.deptForm.resetFields()
     }
   }
