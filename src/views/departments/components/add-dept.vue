@@ -38,11 +38,22 @@
         部门名负责人"
         prop="manager"
       >
+
+        <!-- native修饰符，可以找到原生元素的事件 -->
         <el-select
+          @focus="getEmployeeSimple"
           v-model="formData.manager"
           style="width:80%"
           placeholder="请选择"
-        />
+        >
+          <!-- 遍历选项 -->
+          <el-option
+            v-for="item in peoples"
+            :key="item.id"
+            :label="item.username"
+            :value="item.username"
+          ></el-option>
+        </el-select>
       </el-form-item>
 
       <el-form-item
@@ -81,6 +92,7 @@
 
 <script>
 import { getDePartments } from '@/api/departments'
+import { getEmployeeSimple } from '@/api/employees'
 export default {
   name: '',
   components: {},
@@ -96,7 +108,7 @@ export default {
   },
   data() {
     // /检查部门名称是否重复
-    const checkNameRepeat = async(rule, value, callback) => {
+    const checkNameRepeat = async (rule, value, callback) => {
       // value是部门名称 与同级部门下的部门去比较 有没有相同的 不能重复
       const { depts } = await getDePartments()
       // 去找同级部门下 有没有和value相同的数据
@@ -106,7 +118,7 @@ export default {
       // 如果isRepeat为true 表示有相同名称
       isRepeat ? callback(new Error(`同级部门下已经有${value}的部门了`)) : callback()
     }
-    const checkCodeRepeat = async(rule, value, callback) => {
+    const checkCodeRepeat = async (rule, value, callback) => {
       const { depts } = await getDePartments()
       // 要求编码 和所有的部门编码都不能重复  由于历史数据有可能没有code所以加一个强制性条件 就是value值不为空
       const isRepeat = depts.some(item => item.code && value)
@@ -143,14 +155,19 @@ export default {
           { required: true, message: '部门介绍不能为空', trigger: 'blur' },
           { min: 1, max: 300, message: '部门介绍长度为1-300个字符', trigger: 'blur' }
         ]
-      }
+      },
+      peoples: []
     }
   },
   computed: {},
   watch: {},
   created() { },
   mounted() { },
-  methods: {}
+  methods: {
+    async getEmployeeSimple() {
+      this.peoples = await getEmployeeSimple()
+    }
+  }
 }
 </script>
 
