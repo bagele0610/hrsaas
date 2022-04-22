@@ -8,6 +8,7 @@
             <!-- 左侧内容 -->
             <el-row style="height:60px">
               <el-button
+                @click="showDialog=true"
                 icon="el-icon-plus"
                 size="small"
                 type="primary"
@@ -29,8 +30,7 @@
               >
               </el-table-column>
               <el-table-column
-                prop="
-                name"
+                prop="name"
                 label="名称"
                 width="240"
               ></el-table-column>
@@ -46,6 +46,7 @@
                     type="success"
                   >分配权限</el-button>
                   <el-button
+                    @click="editRole(row.id)"
                     size="small"
                     type="primary"
                   >编辑</el-button>
@@ -128,6 +129,47 @@
         </el-tabs>
       </el-card>
     </div>
+    <!-- 放置一个弹层组件 -->
+    <!-- close事件在点击确定的时候也会触发 -->
+    <el-dialog
+      title="编辑部门"
+      :visible="showDialog"
+      @close="btnCancel"
+    >
+      <el-form
+        ref="roleForm"
+        :model="roleForm"
+        :rules="rules"
+        label-width="120px"
+      >
+        <el-form-item
+          prop="name"
+          label="角色名称"
+        >
+          <el-input v-model="roleForm.name"></el-input>
+        </el-form-item>
+        <el-form-item label="角色描述">
+          <el-input v-model="roleForm.description"></el-input>
+        </el-form-item>
+      </el-form>
+      <!-- 防止footer插槽 -->
+      <el-row
+        type="flex"
+        justify="center"
+      >
+        <el-col :span="8">
+          <el-button
+            size="small"
+            @click="btnCancel"
+          >取消</el-button>
+          <el-button
+            type="primary"
+            size="small"
+            @click="btnOk"
+          >确定</el-button>
+        </el-col>
+      </el-row>
+    </el-dialog>
   </div>
 </template>
 
@@ -135,7 +177,10 @@
 import {
   getRoleList,
   getCompanyInfo,
-  deleteRole
+  deleteRole,
+  getRoleDetail,
+  updateRole,
+  addRole
 } from '@/api/setting'
 import {
   mapGetters
@@ -152,6 +197,14 @@ export default {
       },
       formData: {
         // 公司信息
+      },
+      showDialog: false,//控制弹层显示
+      roleForm: {
+        name: '',
+        description: ''
+      },
+      rules: {
+        name: [{ required: true, message: '角色名字不能为空', trigger: 'blur' }]
       }
     }
   },
@@ -190,6 +243,38 @@ export default {
       } catch (error) {
         console.log(error);
       }
+    },
+    async editRole(id) {
+      this.roleForm = await getRoleDetail(id)//实现数据回写
+      this.showDialog = true
+    },
+    async btnOk() {
+      try {
+        await this.$refs.roleForm.validate()
+        // 只有校验通过才进行下方
+        if (this.roleForm.id) {
+          await updateRole(this.roleForm)
+
+        } else {
+          // 新增业务
+          await addRole(this.roleForm)
+        }
+        // 重新拉取数据
+        this.getRoleList()
+        this.$message.success('操作成功')
+        this.showDialog = false//关闭弹层会触发el-dialog的close事件,而@close绑定了btnCancel
+      } catch (error) {
+        console.log(error);
+      }
+
+    },
+    btnCancel() {
+      this.roleForm = {
+        name: '',
+        description: ''
+      }
+      this.$refs.roleForm.resetFields()//移除上一次校验结果
+      this.showDialog = false
     }
   }
 }
